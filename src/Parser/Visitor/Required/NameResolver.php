@@ -105,8 +105,15 @@ class NameResolver extends PhpParserNameResolver implements LoggerAwareInterface
             if ($doc = $node->getDocComment()) {
                 /** @var NameContext $nameContext */
                 $nameContext = $this->getNameContext();
+
+                $docText = str_replace('[]', '', $doc->getText());
+                $docText = str_replace('array-key', 'string|int', $docText);
+                $docText = preg_replace('/callable\(.+?\)(:\S+)?/m', 'callable', $docText);
+                $docText = preg_replace('/array<(?:\s*\S+\s*,)?\s*(\S+)\s*>/m', 'array|$1[]', $docText);
+                $docText = preg_replace('/\s(\S+)<\S+>/m', ' $1', $docText);
+
                 $docBlock = $this->docBlockFactory->create(
-                    str_replace('[]', '', $doc->getText()),
+                    $docText,
                     new Context((string) $nameContext->getNamespace(), $nameContext->getNamespaceAliases())
                 );
                 if ($tagNames = $this->collectTagNamesBy($docBlock->getTags())) {
